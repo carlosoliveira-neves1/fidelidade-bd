@@ -1,7 +1,15 @@
 from flask import Blueprint, request, jsonify
-from src.models.user import db, Cliente, Brinde, Resgate, Ponto, StatusResgateEnum, NivelEnum
+from src.models.user import (
+    db,
+    Cliente,
+    Brinde,
+    Resgate,
+    Ponto,
+    StatusResgateEnum,
+    NivelEnum,
+    Campanha,
+)
 from datetime import datetime
-import uuid
 import secrets
 
 resgate_bp = Blueprint('resgate', __name__)
@@ -274,14 +282,17 @@ def listar_brindes_disponiveis(cliente_id):
         
         # Buscar campanhas ativas
         agora = datetime.utcnow()
-        campanhas_ativas = db.session.query(Brinde)\
-                                   .join(Brinde.campanha)\
-                                   .filter(
-                                       Brinde.quantidade_disponivel > 0,
-                                       Brinde.campanha.has(ativa=True),
-                                       Brinde.campanha.has(data_inicio <= agora),
-                                       Brinde.campanha.has(data_fim >= agora)
-                                   ).all()
+        campanhas_ativas = (
+            db.session.query(Brinde)
+            .join(Brinde.campanha)
+            .filter(
+                Brinde.quantidade_disponivel > 0,
+                Brinde.campanha.has(Campanha.ativa == True),
+                Brinde.campanha.has(Campanha.data_inicio <= agora),
+                Brinde.campanha.has(Campanha.data_fim >= agora),
+            )
+            .all()
+        )
         
         brindes_disponiveis = []
         
